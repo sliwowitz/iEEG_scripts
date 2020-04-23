@@ -166,6 +166,7 @@ classdef ChannelPlot < matlab.mixin.Copyable
                
                 if ~isempty(selch) && selch>0
                     scatter3(XYZ.X(selch),XYZ.Y(selch),XYZ.Z(selch),max(sizes),[0 0 0]);
+                    obj.highlightChannel(obj.plotCh3D.dispChannels(selch));
                 end
                 
                 if ~isempty(roi) && numel(roi)>=4 && ~obj.plotCh3D.outputstyle %[x y z edge]
@@ -292,6 +293,7 @@ classdef ChannelPlot < matlab.mixin.Copyable
            obj.plotCh3D.ch_highlighted = ch;
         end
     end
+    
     methods  (Access = private)
         function PlotClusters(obj,clrs)
             %PlotClusters - plots the previosly computer clusters if any exist, according to the current popis   
@@ -548,8 +550,7 @@ classdef ChannelPlot < matlab.mixin.Copyable
               end
         end
 
-        
-        
+       
         function delete(obj) %destructor of a handle class
             if isfield(obj.plotCh3D,'fh') && ~isempty(obj.plotCh3D.fh) && ishandle(obj.plotCh3D.fh) 
                 close(obj.plotCh3D.fh); 
