@@ -424,7 +424,7 @@ classdef CHilbertMulti < CHilbert
                 if exist(obj.mfilename,'file')==2
                     filename = obj.mfilename; %nazev a cesta, pod kterym naposled ulozeno
                 elseif exist(obj.hfilename,'file')==2
-                    filename = obj.hfilename; %tohle se uklada p�i Load jako na�itan� jm�no souboru
+                    filename = obj.hfilename; %tohle se uklada při Load jako načitané jméno souboru
                 elseif exist(obj.filename,'file')==2
                     filename = obj.filename; %nazev cieegdat
                 else
@@ -532,7 +532,7 @@ classdef CHilbertMulti < CHilbert
             else
                 disp(['zadne soubory nenalezeny: ' filenameExtract]);
             end
-        end
+        end        
         function filename2 = filenameM(filename)
             %vraci jmeno souboru s daty tridy CHilbertMulti
            filename=strrep(filename,'_CHilb',''); %odstranim pripony vytvorene pri save
