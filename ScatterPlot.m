@@ -52,6 +52,9 @@ classdef ScatterPlot < handle
         
         categoryMarkers = {'o', 's', 'd', 'p'}; % markery pro kategorie
         transparent; % jestli maji byt markers nakreslene s pruhlednosti
+        
+        significance;
+        catSource;
     end
     
     methods
@@ -261,15 +264,39 @@ classdef ScatterPlot < handle
         
         function setCategories(obj)
             if ~isempty(obj.ciEEGData.Wp) && isfield(obj.ciEEGData.Wp(obj.ciEEGData.WpActive), 'kats') %prvni volba je pouzit kategorie ze statistiky
-                obj.categories  = flip(obj.ciEEGData.Wp(obj.ciEEGData.WpActive).kats);
+                obj.catSource = 'stats';
             else
-                obj.categories = obj.ciEEGData.PsyData.Categories(); %pokud nejsou, pouziju vsechny kategorie
+                obj.catSource = 'all';
             end
-            obj.categoryNames = strings(size(obj.categories));
+                
+            if strcmp(obj.catSource, 'stats') % Categories retrieved form statistics
+                [~,~,kats] = obj.ciEEGData.GetKatsNames();  % First I need to know the number of single categories. This number is not returned by CiEEGData.IntervalyResp()
+                obj.categories = kats;
+                numCategories = numel(kats);
+
+                if isfield(obj.ciEEGData.plotRCh, 'selChSignum') %pokud mam nastavene signum z SelChannelStat, pouziju to, jinak chci odchylky od 0 v obou smerech
+                    signum = obj.ciEEGData.plotRCh.selChSignum;
+                else
+                    signum = 0;
+                end 
+                
+                [prumery, ~,~,~,katsnames,~] = obj.ciEEGData.IntervalyResp([], [], signum, 0);
+                obj.categoryNames = katsnames(1:numCategories); % Use only single categories, i.e. first numCategories cells
+                prumery = squeeze(prumery > 0); 
+                %obj.significance = prumery(:, 1:numCategories);
+                obj.significance = prumery; warning('using full stats field - this might be wrong');
+            else  % All categories
+                obj.categories = obj.ciEEGData.PsyData.Categories(); %pokud nejsou, pouziju vsechny kategorie
+                numCategories = length(obj.ciEEGData.PsyData.Categories());
+                obj.categoryNames = strings(numCategories);
+                for k = 1 : numel(obj.categories)                
+                    catnum = cellval(obj.categories,k);%cislo kategorie, muze byt cell, pokud vice kategorii proti jedne
+                    obj.categoryNames(k) = obj.ciEEGData.PsyData.CategoryName(catnum);
+                end
+            end
+
+            % Check that the order of categories is the same as order of selChNames.
             for k = 1 : numel(obj.categories)                
-                catnum = cellval(obj.categories,k);%cislo kategorie, muze byt cell, pokud vice kategorii proti jedne
-                obj.categoryNames(k) = obj.ciEEGData.PsyData.CategoryName(catnum);
-                %check that the order of categories is the same as order of selChNames
                 if ~strcmp(obj.categoryNames{k},obj.selChNames{k})
                     warning('categoryNames{%i}="%s" is different from selChNames{%i}="%s"',k,obj.categoryNames{k},k,obj.selChNames{k});
                 end
@@ -379,7 +406,11 @@ classdef ScatterPlot < handle
             if obj.connectChannels > 0
                 obj.drawConnectChannels();
             end
-            obj.drawPlot(selChFiltered, selChRj); %actual drawing
+            if strcmp(obj.catSource, 'stats')   % Categories retrieved form statistics
+                obj.drawPlot(obj.significance, selChRj); %actual drawing
+            else                                % All categories
+                obj.drawPlot(selChFiltered, selChRj); %actual drawing
+            end
             
             legend(obj.ax, 'show');
             hold(obj.ax, 'off');
